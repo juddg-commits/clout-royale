@@ -134,7 +134,7 @@ export const CONFIG = {
       },
       { id: 'gainsShop', label: 'GAINS SHOP', x: 235, y: 180, color: 0xffa94d, action: 'openShop' }, // Aura Gym: grind for gains
       { id: 'grindShrine', label: 'GRIND SHRINE', x: 235, y: 545, color: 0xe74c3c, action: 'showStats' }, // moved to the Pool
-      { id: 'contentStudio', label: 'CONTENT STUDIO', x: 560, y: 355, color: 0x8d99ae, action: 'openAutomation' }, // AI automation (idle layer)
+      { id: 'contentStudio', label: 'CONTENT STUDIO', x: 560, y: 382, color: 0x8d99ae, action: 'openAutomation' }, // AI automation (idle layer)
     ],
   },
 
@@ -423,6 +423,8 @@ export const CONFIG = {
   // UI / feedback
   // -------------------------------------------------------------------------
   UI: {
+    /** Loaded from Google Fonts in index.html; BootScene waits for it (with a timeout). */
+    FONT: '"Space Grotesk", "Helvetica Neue", Arial, sans-serif',
     SHOP: {
       PURCHASE_INPUT_LOCK_MS: 600, // the click that OPENED the shop can't also buy
     },

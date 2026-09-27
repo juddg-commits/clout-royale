@@ -73,20 +73,22 @@ export class HubScene extends Phaser.Scene {
     this.keys = this.input.keyboard!.addKeys('E,ESC') as typeof this.keys;
 
     for (const def of CONFIG.HUB.INTERACTABLES) {
+      const glow = this.add.image(def.x, def.y, 'glow').setTint(def.color).setScale(1.6).setDepth(4);
+      this.tweens.add({ targets: glow, alpha: 0.45, scale: 1.3, duration: 1400, repeat: -1, yoyo: true, ease: 'Sine.InOut' });
       const marker = this.add
-        .rectangle(def.x, def.y, 34, 34, def.color, 0.9)
-        .setStrokeStyle(2, 0xffffff, 0.6)
+        .rectangle(def.x, def.y, 30, 30, def.color, 0.95)
+        .setStrokeStyle(2, 0xffffff, 0.7)
         .setDepth(5);
       this.tweens.add({ targets: marker, angle: 45, duration: 2400, repeat: -1, yoyo: true, ease: 'Sine.InOut' });
       this.add
-        .text(def.x, def.y - 32, def.label, { fontFamily: 'monospace', fontSize: '11px', color: '#e8e8f0' })
+        .text(def.x, def.y - 34, def.label, { fontFamily: CONFIG.UI.FONT, fontSize: '11px', fontStyle: 'bold', color: '#e8e8f0', stroke: '#000000', strokeThickness: 3 })
         .setOrigin(0.5)
         .setDepth(5);
       this.interactables.push({ def, marker });
     }
 
     this.prompt = this.add
-      .text(0, 0, '', { fontFamily: 'monospace', fontSize: '13px', color: '#ffe066', fontStyle: 'bold' })
+      .text(0, 0, '', { fontFamily: CONFIG.UI.FONT, fontSize: '13px', color: '#ffe066', fontStyle: 'bold' })
       .setOrigin(0.5)
       .setDepth(30)
       .setVisible(false);
@@ -166,11 +168,11 @@ export class HubScene extends Phaser.Scene {
 
     const dim = this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.7).setDepth(depth).setInteractive();
     const title = this.add
-      .text(WIDTH / 2, 120, 'MISSION TERMINAL', { fontFamily: 'monospace', fontSize: '34px', color: '#ffe066', fontStyle: 'bold' })
+      .text(WIDTH / 2, 120, 'MISSION TERMINAL', { fontFamily: CONFIG.UI.FONT, fontSize: '34px', color: '#ffe066', fontStyle: 'bold' })
       .setOrigin(0.5)
       .setDepth(depth);
     const hint = this.add
-      .text(WIDTH / 2, HEIGHT - 90, '[ESC] close', { fontFamily: 'monospace', fontSize: '14px', color: '#aaaacc' })
+      .text(WIDTH / 2, HEIGHT - 90, '[ESC] close', { fontFamily: CONFIG.UI.FONT, fontSize: '14px', color: '#aaaacc' })
       .setOrigin(0.5)
       .setDepth(depth);
     this.pickerObjects.push(dim, title, hint);
@@ -194,23 +196,23 @@ export class HubScene extends Phaser.Scene {
       .setStrokeStyle(2, unlocked ? 0xffe066 : 0x444455)
       .setDepth(depth);
     const name = this.add
-      .text(x - 300, y - 38, mission.name, { fontFamily: 'monospace', fontSize: '20px', color: unlocked ? '#ffffff' : '#666677', fontStyle: 'bold' })
+      .text(x - 300, y - 38, mission.name, { fontFamily: CONFIG.UI.FONT, fontSize: '20px', color: unlocked ? '#ffffff' : '#666677', fontStyle: 'bold' })
       .setOrigin(0, 0.5)
       .setDepth(depth + 1);
     const tag = this.add
-      .text(x - 300, y - 12, mission.tagline, { fontFamily: 'monospace', fontSize: '12px', color: '#aaaacc' })
+      .text(x - 300, y - 12, mission.tagline, { fontFamily: CONFIG.UI.FONT, fontSize: '12px', color: '#aaaacc' })
       .setOrigin(0, 0.5)
       .setDepth(depth + 1);
     const detailText = unlocked
       ? `${objectiveLabel(mission)} · ${pool} enemies in ${mission.waves.length} waves${mission.loopWaves ? ' (looping)' : ''} · ${formatClock(mission.durationSeconds)} · wins: ${wins}`
       : `locked · win ${gate?.name ?? '?'}${need > 1 ? ` ${need} times` : ''} first`;
     const detail = this.add
-      .text(x - 300, y + 16, detailText, { fontFamily: 'monospace', fontSize: '12px', color: unlocked ? '#8ecae6' : '#666677' })
+      .text(x - 300, y + 16, detailText, { fontFamily: CONFIG.UI.FONT, fontSize: '12px', color: unlocked ? '#8ecae6' : '#666677' })
       .setOrigin(0, 0.5)
       .setDepth(depth + 1);
     const launch = this.add
       .text(x + 300, y + 34, unlocked ? '[CLICK TO DEPLOY]' : '[LOCKED]', {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '13px',
         color: unlocked ? '#7cfc00' : '#666677',
       })
@@ -257,7 +259,7 @@ export class HubScene extends Phaser.Scene {
     ];
     const bg = this.add.rectangle(235, 300, 320, 190, 0x1e1e30, 0.95).setStrokeStyle(2, 0xe74c3c).setDepth(depth);
     const text = this.add
-      .text(235, 300, lines.join('\n'), { fontFamily: 'monospace', fontSize: '13px', color: '#e8e8f0', align: 'center', lineSpacing: 4 })
+      .text(235, 300, lines.join('\n'), { fontFamily: CONFIG.UI.FONT, fontSize: '13px', color: '#e8e8f0', align: 'center', lineSpacing: 4 })
       .setOrigin(0.5)
       .setDepth(depth + 1);
     this.statsObjects = [bg, text];
@@ -291,14 +293,14 @@ export class HubScene extends Phaser.Scene {
     const depth = CONFIG.UI.HUD_DEPTH;
     this.hudText = this.add
       .text(16, 16, this.hudLine(), {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '15px',
         color: '#ffffff',
       })
       .setDepth(depth);
     this.add
       .text(16, CONFIG.CANVAS.HEIGHT - 28, 'WASD move · walk up to a marker and press E', {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '12px',
         color: '#666688',
       })
@@ -317,7 +319,7 @@ export class HubScene extends Phaser.Scene {
         140,
         `WHILE YOU WERE GONE the slop farmed ${parts}\ncollect it at the CONTENT STUDIO`,
         {
-          fontFamily: 'monospace',
+          fontFamily: CONFIG.UI.FONT,
           fontSize: '16px',
           color: '#8d99ae',
           align: 'center',
@@ -349,7 +351,7 @@ export class HubScene extends Phaser.Scene {
     ];
     const banner = this.add
       .text(CONFIG.CANVAS.WIDTH / 2, 64, lines.join('\n'), {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '16px',
         color,
         align: 'center',

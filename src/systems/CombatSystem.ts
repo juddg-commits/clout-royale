@@ -66,6 +66,7 @@ export class CombatSystem {
   hitBot(bot: Bot, damage: number, knockbackAngle?: number, knockbackVelocity?: number): boolean {
     if (!bot.active) return false;
     this.effects.damageNumber(bot.x, bot.y - 22, damage);
+    this.effects.burst(bot.x, bot.y, 0xffffff, 5, 160);
     const died = bot.takeDamage(damage, knockbackAngle, knockbackVelocity);
     if (died) this.callbacks.onBotEliminated(bot);
     return died;
@@ -98,6 +99,7 @@ export class CombatSystem {
 
     const died = this.player.takeDamage(bot.def.attackDamage);
     this.effects.damageNumber(this.player.x, this.player.y - 24, bot.def.attackDamage, '#ff8080');
+    this.effects.burst(this.player.x, this.player.y, 0xff5555, 6, 140);
     this.scene.cameras.main.shake(CONFIG.UI.HIT_SHAKE_DURATION_MS, CONFIG.UI.HIT_SHAKE_INTENSITY);
     if (died) this.callbacks.onPlayerDied();
   }

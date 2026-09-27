@@ -148,11 +148,11 @@ export class AbilitySystem {
         .setDepth(depth);
       const keyLabel = def.slot === 'SHIFT' ? 'SHF' : def.slot;
       this.scene.add
-        .text(x, y - 8, keyLabel, { fontFamily: 'monospace', fontSize: '18px', color: '#ffffff', fontStyle: 'bold' })
+        .text(x, y - 8, keyLabel, { fontFamily: CONFIG.UI.FONT, fontSize: '18px', color: '#ffffff', fontStyle: 'bold' })
         .setOrigin(0.5)
         .setDepth(depth + 1);
       this.scene.add
-        .text(x, y + 14, def.shortName, { fontFamily: 'monospace', fontSize: '10px', color: '#aaaacc' })
+        .text(x, y + 14, def.shortName, { fontFamily: CONFIG.UI.FONT, fontSize: '10px', color: '#aaaacc' })
         .setOrigin(0.5)
         .setDepth(depth + 1);
       const cdOverlay = this.scene.add
@@ -161,7 +161,7 @@ export class AbilitySystem {
         .setDepth(depth + 2)
         .setVisible(false);
       const cdText = this.scene.add
-        .text(x, y, '', { fontFamily: 'monospace', fontSize: '15px', color: '#ffffff', fontStyle: 'bold' })
+        .text(x, y, '', { fontFamily: CONFIG.UI.FONT, fontSize: '15px', color: '#ffffff', fontStyle: 'bold' })
         .setOrigin(0.5)
         .setDepth(depth + 3);
       this.icons.push({ def, frame, cdOverlay, cdText });

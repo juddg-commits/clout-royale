@@ -12,6 +12,7 @@ type WASDKeys = Record<'W' | 'A' | 'S' | 'D', Phaser.Input.Keyboard.Key>;
 export class HubAvatar extends Phaser.Physics.Arcade.Image {
   private keys: WASDKeys;
   private moveSpeed: number;
+  private shadow: Phaser.GameObjects.Ellipse;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'player');
@@ -19,11 +20,13 @@ export class HubAvatar extends Phaser.Physics.Arcade.Image {
     scene.physics.add.existing(this);
     this.setCollideWorldBounds(true);
     this.setDepth(10);
+    this.shadow = scene.add.ellipse(x, y + 14, 30, 10, 0x000000, 0.35).setDepth(9);
     this.moveSpeed = CLASS_REGISTRY[DEFAULT_CLASS_ID].baseStats.moveSpeed;
     this.keys = scene.input.keyboard!.addKeys('W,A,S,D') as WASDKeys;
   }
 
   update(): void {
+    this.shadow.setPosition(this.x, this.y + 14);
     // WASD movement (normalized so diagonals aren't faster)
     const ix = (this.keys.D.isDown ? 1 : 0) - (this.keys.A.isDown ? 1 : 0);
     const iy = (this.keys.S.isDown ? 1 : 0) - (this.keys.W.isDown ? 1 : 0);
@@ -37,5 +40,10 @@ export class HubAvatar extends Phaser.Physics.Arcade.Image {
     // Face the mouse so walking around still feels like the same guy
     const pointer = this.scene.input.activePointer;
     this.setRotation(Phaser.Math.Angle.Between(this.x, this.y, pointer.worldX, pointer.worldY));
+  }
+
+  destroy(fromScene?: boolean): void {
+    this.shadow.destroy();
+    super.destroy(fromScene);
   }
 }

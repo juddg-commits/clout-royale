@@ -21,6 +21,7 @@ export class Bot extends Phaser.Physics.Arcade.Image {
   private orbitDir: 1 | -1;
   private nameLabel: Phaser.GameObjects.Text;
   private hpBar: Phaser.GameObjects.Graphics;
+  private shadow: Phaser.GameObjects.Ellipse;
   private speech?: Phaser.GameObjects.Text;
   private speechUntil = 0;
   private onAttack: (bot: Bot) => void;
@@ -43,8 +44,9 @@ export class Bot extends Phaser.Physics.Arcade.Image {
     this.setCollideWorldBounds(true);
     this.setDepth(10);
 
+    this.shadow = scene.add.ellipse(x, y + 12, 26, 9, 0x000000, 0.35).setDepth(9);
     this.nameLabel = scene.add
-      .text(x, y, def.label, { fontFamily: 'monospace', fontSize: '11px', color: '#e8e8f0' })
+      .text(x, y, def.label, { fontFamily: CONFIG.UI.FONT, fontSize: '11px', fontStyle: 'bold', color: '#e8e8f0', stroke: '#000000', strokeThickness: 3 })
       .setOrigin(0.5)
       .setDepth(11);
     this.hpBar = scene.add.graphics().setDepth(11);
@@ -132,7 +134,7 @@ export class Bot extends Phaser.Physics.Arcade.Image {
     if (!this.speech) {
       this.speech = this.scene.add
         .text(this.x, this.y, line, {
-          fontFamily: 'monospace',
+          fontFamily: CONFIG.UI.FONT,
           fontSize: '11px',
           color: '#111122',
           backgroundColor: '#f5f5fa',
@@ -148,6 +150,7 @@ export class Bot extends Phaser.Physics.Arcade.Image {
 
   private syncAttachments(): void {
     const bar = CONFIG.UI.BOT_HP_BAR;
+    this.shadow.setPosition(this.x, this.y + 12);
     this.nameLabel.setPosition(this.x, this.y + bar.OFFSET_Y - 10);
     this.hpBar.clear();
     const pct = Phaser.Math.Clamp(this.health / this.def.maxHealth, 0, 1);
@@ -166,6 +169,7 @@ export class Bot extends Phaser.Physics.Arcade.Image {
   }
 
   destroy(fromScene?: boolean): void {
+    this.shadow.destroy();
     this.nameLabel.destroy();
     this.hpBar.destroy();
     this.speech?.destroy();

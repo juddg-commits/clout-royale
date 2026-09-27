@@ -54,6 +54,7 @@ export class GameScene extends Phaser.Scene {
   private nextSmoothieAt = Number.POSITIVE_INFINITY;
   private prevTrendStage: TrendStage = 'Underground';
   private smoothiesCollected = 0; // collect-objective progress
+  private started = false; // first update() tick schedules waves + smoothies
 
   // Meter/zone watches (for one-shot popups on threshold crossings)
   private wasCringeSlowed = false;
@@ -98,7 +99,7 @@ export class GameScene extends Phaser.Scene {
     drawMansion(this, this.missionDef.name);
     this.add
       .text(16, CONFIG.CANVAS.HEIGHT - 28, 'WASD move · Mouse aim · LMB attack · Q/E/Shift/R abilities', {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '12px',
         color: '#666688',
       })
@@ -115,7 +116,8 @@ export class GameScene extends Phaser.Scene {
     this.trend = new TrendSystem();
     this.prevTrendStage = 'Underground';
     this.smoothiesCollected = 0;
-    this.nextSmoothieAt = this.time.now + CONFIG.TREND.FIRST_SPAWN_DELAY_MS;
+    this.nextSmoothieAt = Number.POSITIVE_INFINITY; // scheduled on the first tick
+    this.started = false;
 
     this.botGroup = this.physics.add.group();
     this.pickupGroup = this.physics.add.group();
@@ -136,11 +138,21 @@ export class GameScene extends Phaser.Scene {
 
     this.parryGfx = this.add.graphics().setDepth(9);
     this.buildHud();
-    this.startNextWave(this.time.now);
+    // Waves + smoothies are scheduled in update(): see the `started` block.
   }
 
   update(time: number, delta: number): void {
     if (this.matchOver) return;
+
+    // First tick: schedule from the live clock. this.time.now is stale during
+    // create() (a re-entered scene keeps its last frame's value; a fresh one
+    // reads ~0), which made the wave failsafe and the smoothie timer fire
+    // instantly instead of 30s / 5s in.
+    if (!this.started) {
+      this.started = true;
+      this.nextSmoothieAt = time + CONFIG.TREND.FIRST_SPAWN_DELAY_MS;
+      this.startNextWave(time);
+    }
 
     this.player.update(time, this.combat);
     this.abilitySystem.update(time);
@@ -307,6 +319,7 @@ export class GameScene extends Phaser.Scene {
     const y = Phaser.Math.Between(shop.y + 34, shop.y + shop.height - 24);
     const smoothie = this.smoothieGroup.create(x, y, 'smoothie') as Phaser.Physics.Arcade.Image;
     smoothie.setDepth(4);
+    this.attachGlow(smoothie, 0x40e0d0, 0.9);
     this.tweens.add({ targets: smoothie, y: y - 5, yoyo: true, repeat: -1, duration: 500, ease: 'Sine.InOut' });
     this.time.delayedCall(CONFIG.TREND.SMOOTHIE_LIFETIME_MS, () => {
       if (smoothie.active) smoothie.destroy(); // it melted
@@ -329,6 +342,7 @@ export class GameScene extends Phaser.Scene {
       .filter(Boolean)
       .join('  ');
     this.effects.floatText(smoothie.x, smoothie.y - 16, parts, payout.cringe > 0 ? '#ff6bd6' : '#40e0d0');
+    this.effects.burst(smoothie.x, smoothie.y, payout.cringe > 0 ? 0xff6bd6 : 0x40e0d0, 10, 140);
     this.firePopup('smoothieGrab', '#40e0d0');
   };
 
@@ -363,7 +377,13 @@ export class GameScene extends Phaser.Scene {
   private buildHud(): void {
     const depth = CONFIG.UI.HUD_DEPTH;
     const bar = CONFIG.UI.HEALTH_BAR;
-    const font = { fontFamily: 'monospace', color: '#ffffff' };
+    const font = { fontFamily: CONFIG.UI.FONT, color: '#ffffff' };
+
+    // Panels behind the two HUD clusters so text stays readable over any zone.
+    const panels = this.add.graphics().setDepth(depth - 1);
+    panels.fillStyle(0x000000, 0.42);
+    panels.fillRoundedRect(8, 6, 312, 92, 12);
+    panels.fillRoundedRect(CONFIG.CANVAS.WIDTH - 332, 6, 324, 78, 12);
 
     this.hudHealthBar = this.add.graphics().setDepth(depth);
     this.hudHealthText = this.add
@@ -383,7 +403,7 @@ export class GameScene extends Phaser.Scene {
       .text(bar.X, meterY + 32, '', { ...font, fontSize: '13px', color: '#ccccdd' })
       .setDepth(depth);
     this.hudTimerText = this.add
-      .text(CONFIG.CANVAS.WIDTH / 2, 14, '', { ...font, fontSize: '22px' })
+      .text(CONFIG.CANVAS.WIDTH / 2, 12, '', { ...font, fontSize: '28px', fontStyle: 'bold', stroke: '#000000', strokeThickness: 5 })
       .setOrigin(0.5, 0)
       .setDepth(depth);
     this.hudElimsText = this.add
@@ -410,9 +430,10 @@ export class GameScene extends Phaser.Scene {
     // Health bar
     const pct = Phaser.Math.Clamp(s.health / s.maxHealth, 0, 1);
     this.hudHealthBar.clear();
-    this.hudHealthBar.fillStyle(0x000000, 0.65).fillRect(bar.X, bar.Y, bar.WIDTH, bar.HEIGHT);
+    this.hudHealthBar.fillStyle(0x000000, 0.65).fillRoundedRect(bar.X, bar.Y, bar.WIDTH, bar.HEIGHT, 6);
     const hpColor = pct > 0.5 ? 0x2ecc71 : pct > 0.25 ? 0xf1c40f : 0xe74c3c;
-    this.hudHealthBar.fillStyle(hpColor, 1).fillRect(bar.X + 2, bar.Y + 2, (bar.WIDTH - 4) * pct, bar.HEIGHT - 4);
+    const hpWidth = (bar.WIDTH - 4) * pct;
+    if (hpWidth > 0) this.hudHealthBar.fillStyle(hpColor, 1).fillRoundedRect(bar.X + 2, bar.Y + 2, Math.max(hpWidth, 8), bar.HEIGHT - 4, 5);
     this.hudHealthText.setText(`HP ${Math.ceil(s.health)}/${s.maxHealth}`);
 
     // Aura / Cringe meter bars (cringe turns red when slowing the player)
@@ -421,12 +442,13 @@ export class GameScene extends Phaser.Scene {
     const cringePct = s.cringe / CONFIG.METERS.CRINGE_MAX;
     const slowed = this.player.isCringeSlowed();
     this.hudMeterBars.clear();
-    this.hudMeterBars.fillStyle(0x000000, 0.65).fillRect(bar.X, meterY, meter.WIDTH, meter.HEIGHT);
-    this.hudMeterBars.fillStyle(0x9be7ff, 1).fillRect(bar.X + 1, meterY + 1, (meter.WIDTH - 2) * auraPct, meter.HEIGHT - 2);
-    this.hudMeterBars.fillStyle(0x000000, 0.65).fillRect(bar.X, meterY + 16, meter.WIDTH, meter.HEIGHT);
-    this.hudMeterBars
-      .fillStyle(slowed ? 0xff3355 : 0xff6bd6, 1)
-      .fillRect(bar.X + 1, meterY + 17, (meter.WIDTH - 2) * cringePct, meter.HEIGHT - 2);
+    const meterFill = (y: number, pctFill: number, color: number) => {
+      this.hudMeterBars.fillStyle(0x000000, 0.65).fillRoundedRect(bar.X, y, meter.WIDTH, meter.HEIGHT, 4);
+      const w = (meter.WIDTH - 2) * pctFill;
+      if (w > 0) this.hudMeterBars.fillStyle(color, 1).fillRoundedRect(bar.X + 1, y + 1, Math.max(w, 6), meter.HEIGHT - 2, 3);
+    };
+    meterFill(meterY, auraPct, 0x9be7ff);
+    meterFill(meterY + 16, cringePct, slowed ? 0xff3355 : 0xff6bd6);
     // Cringe-slow threshold tick mark
     const tickX = bar.X + meter.WIDTH * (CONFIG.METERS.CRINGE_SLOW_THRESHOLD / CONFIG.METERS.CRINGE_MAX);
     this.hudMeterBars.fillStyle(0xffffff, 0.8).fillRect(tickX, meterY + 15, 1, meter.HEIGHT + 2);
@@ -491,6 +513,7 @@ export class GameScene extends Phaser.Scene {
     this.eliminations += 1;
     this.deaths += 1;
     this.effects.floatText(bot.x, bot.y - 20, 'ELIMINATED', '#ff6b6b');
+    this.effects.burst(bot.x, bot.y, bot.def.color, 22, 260);
     this.firePopup('elimination');
     this.spawnPickup(bot.x, bot.y, bot.def);
   }
@@ -505,12 +528,20 @@ export class GameScene extends Phaser.Scene {
   private spawnPickup(x: number, y: number, def: BotArchetypeConfig): void {
     const pickup = this.pickupGroup.create(x, y, 'pickup') as Phaser.Physics.Arcade.Image;
     pickup.setDepth(4);
+    this.attachGlow(pickup, 0xffd700, 0.8);
     pickup.setData('money', def.moneyDrop);
     pickup.setData('clout', def.cloutDrop);
     this.tweens.add({ targets: pickup, scale: 1.3, yoyo: true, repeat: -1, duration: 400 });
     this.time.delayedCall(CONFIG.PICKUPS.LIFETIME_MS, () => {
       if (pickup.active) pickup.destroy();
     });
+  }
+
+  /** Pulsing tinted glow that follows a drop and dies with it. */
+  private attachGlow(target: Phaser.GameObjects.Image, color: number, scale: number): void {
+    const glow = this.add.image(target.x, target.y, 'glow').setTint(color).setScale(scale).setDepth(3.5);
+    this.tweens.add({ targets: glow, alpha: 0.35, duration: 500, yoyo: true, repeat: -1 });
+    target.once(Phaser.GameObjects.Events.DESTROY, () => glow.destroy());
   }
 
   private handlePickupCollected: Phaser.Types.Physics.Arcade.ArcadePhysicsCallback = (_playerObj, pickupObj) => {
@@ -521,6 +552,7 @@ export class GameScene extends Phaser.Scene {
     this.player.stats.money += money;
     this.player.stats.clout += clout;
     this.effects.floatText(pickup.x, pickup.y - 14, `+$${money}  +${clout} clout`, '#ffd700');
+    this.effects.burst(pickup.x, pickup.y, 0xffd700, 8, 120);
     pickup.destroy();
   };
 
@@ -598,7 +630,7 @@ export class GameScene extends Phaser.Scene {
     this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.72).setDepth(depth);
     this.add
       .text(WIDTH / 2, HEIGHT / 2 - 110, title, {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '52px',
         color,
         fontStyle: 'bold',
@@ -610,7 +642,7 @@ export class GameScene extends Phaser.Scene {
     // (PostMatchScene). Level-up / XP / money detail renders there.
     this.add
       .text(WIDTH / 2, HEIGHT / 2 - 20, summary, {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '18px',
         color: '#e8e8f0',
       })
@@ -619,7 +651,7 @@ export class GameScene extends Phaser.Scene {
 
     const prompt = this.add
       .text(WIDTH / 2, HEIGHT / 2 + 90, 'Click to check the feed', {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '16px',
         color: '#aaaacc',
       })

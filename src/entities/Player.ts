@@ -43,6 +43,7 @@ export class Player extends Phaser.Physics.Arcade.Image {
 
   private keys: WASDKeys;
   private nextAttackAt = 0;
+  private shadow: Phaser.GameObjects.Ellipse;
 
   constructor(scene: Phaser.Scene, x: number, y: number, classDef: CreatorClassDef, save: SaveData) {
     super(scene, x, y, 'player');
@@ -53,6 +54,7 @@ export class Player extends Phaser.Physics.Arcade.Image {
     this.setCollideWorldBounds(true);
     this.setPushable(false); // bots bump into the player but can't shove them across the arena
     this.setDepth(10);
+    this.shadow = scene.add.ellipse(x, y + 14, 30, 10, 0x000000, 0.35).setDepth(9);
 
     this.upgradeMods = computeUpgradeMods(save.upgrades);
     const maxHealth = classDef.baseStats.maxHealth + this.upgradeMods.maxHealthBonus;
@@ -69,6 +71,7 @@ export class Player extends Phaser.Physics.Arcade.Image {
   }
 
   update(time: number, combat: CombatSystem): void {
+    this.shadow.setPosition(this.x, this.y + 14);
     if (this.dead) return;
 
     // --- Dash overrides normal movement while active ---
@@ -189,6 +192,11 @@ export class Player extends Phaser.Physics.Arcade.Image {
   }
 
   // ---------------------------------------------------------------------
+
+  destroy(fromScene?: boolean): void {
+    this.shadow.destroy();
+    super.destroy(fromScene);
+  }
 
   /** Apply damage. Returns true if this hit was lethal. */
   takeDamage(amount: number): boolean {

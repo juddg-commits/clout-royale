@@ -42,19 +42,19 @@ export class UpgradeScene extends Phaser.Scene {
     const depth = CONFIG.UI.OVERLAY_DEPTH;
     this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.78).setDepth(depth).setInteractive();
     this.add
-      .text(WIDTH / 2, 70, 'GAINS SHOP', { fontFamily: 'monospace', fontSize: '36px', color: '#ffa94d', fontStyle: 'bold' })
+      .text(WIDTH / 2, 70, 'GAINS SHOP', { fontFamily: CONFIG.UI.FONT, fontSize: '36px', color: '#ffa94d', fontStyle: 'bold' })
       .setOrigin(0.5)
       .setDepth(depth + 1);
     this.add
-      .text(WIDTH / 2, 104, 'Results not typical. Results not guaranteed.', { fontFamily: 'monospace', fontSize: '13px', color: '#8888aa' })
+      .text(WIDTH / 2, 104, 'Results not typical. Results not guaranteed.', { fontFamily: CONFIG.UI.FONT, fontSize: '13px', color: '#8888aa' })
       .setOrigin(0.5)
       .setDepth(depth + 1);
     this.balanceText = this.add
-      .text(WIDTH / 2, 136, '', { fontFamily: 'monospace', fontSize: '17px', color: '#ffffff' })
+      .text(WIDTH / 2, 136, '', { fontFamily: CONFIG.UI.FONT, fontSize: '17px', color: '#ffffff' })
       .setOrigin(0.5)
       .setDepth(depth + 1);
     this.add
-      .text(WIDTH / 2, HEIGHT - 48, '[ESC] back to the mansion', { fontFamily: 'monospace', fontSize: '14px', color: '#aaaacc' })
+      .text(WIDTH / 2, HEIGHT - 48, '[ESC] back to the mansion', { fontFamily: CONFIG.UI.FONT, fontSize: '14px', color: '#aaaacc' })
       .setOrigin(0.5)
       .setDepth(depth + 1);
 
@@ -97,19 +97,19 @@ export class UpgradeScene extends Phaser.Scene {
       .setStrokeStyle(2, maxed ? 0x2ecc71 : 0x555577)
       .setDepth(depth);
     const name = this.add
-      .text(x - 340, y - 30, def.name, { fontFamily: 'monospace', fontSize: '18px', color: '#ffffff', fontStyle: 'bold' })
+      .text(x - 340, y - 30, def.name, { fontFamily: CONFIG.UI.FONT, fontSize: '18px', color: '#ffffff', fontStyle: 'bold' })
       .setOrigin(0, 0.5)
       .setDepth(depth + 1);
     const pips = this.add
       .text(x - 340, y - 6, '■'.repeat(rank) + '□'.repeat(def.costs.length - rank), {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '15px',
         color: '#ffa94d',
       })
       .setOrigin(0, 0.5)
       .setDepth(depth + 1);
     const desc = this.add
-      .text(x - 340, y + 20, def.description, { fontFamily: 'monospace', fontSize: '12px', color: '#aaaacc' })
+      .text(x - 340, y + 20, def.description, { fontFamily: CONFIG.UI.FONT, fontSize: '12px', color: '#aaaacc' })
       .setOrigin(0, 0.5)
       .setDepth(depth + 1);
 
@@ -119,7 +119,7 @@ export class UpgradeScene extends Phaser.Scene {
       .setDepth(depth + 1);
     const buyLabel = this.add
       .text(x + 270, y, maxed ? 'MAXED' : `BUY ${costLabel}`, {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '14px',
         fontStyle: 'bold',
         color: maxed ? '#2ecc71' : affordable ? '#7cfc00' : '#cc6666',

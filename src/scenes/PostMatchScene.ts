@@ -44,7 +44,7 @@ export class PostMatchScene extends Phaser.Scene {
 
     this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x0b0b12).setDepth(0);
     this.add
-      .text(WIDTH / 2, 44, 'THE FEED REACTS', { fontFamily: 'monospace', fontSize: '32px', color: '#ffffff', fontStyle: 'bold' })
+      .text(WIDTH / 2, 44, 'THE FEED REACTS', { fontFamily: CONFIG.UI.FONT, fontSize: '32px', color: '#ffffff', fontStyle: 'bold' })
       .setOrigin(0.5)
       .setDepth(1);
 
@@ -57,7 +57,7 @@ export class PostMatchScene extends Phaser.Scene {
         `${mission?.name ?? result.missionId} — ${outcomeLabel} · ${elimsLabel(result)} · ${secs}s\n` +
           `+$${result.moneyEarned} · +${result.cloutEarned} clout · +${result.xpEarned} XP` +
           (result.levelsGained > 0 ? ` · LEVEL UP → Lv ${save.level}` : ''),
-        { fontFamily: 'monospace', fontSize: '14px', color: outcomeColor, align: 'center', lineSpacing: 5 },
+        { fontFamily: CONFIG.UI.FONT, fontSize: '14px', color: outcomeColor, align: 'center', lineSpacing: 5 },
       )
       .setOrigin(0.5, 0)
       .setDepth(1);
@@ -78,7 +78,7 @@ export class PostMatchScene extends Phaser.Scene {
       .setDepth(1)
       .setInteractive({ useHandCursor: true });
     this.add
-      .text(WIDTH / 2, btnY, 'BACK TO THE MANSION', { fontFamily: 'monospace', fontSize: '14px', color: '#7cfc00', fontStyle: 'bold' })
+      .text(WIDTH / 2, btnY, 'BACK TO THE MANSION', { fontFamily: CONFIG.UI.FONT, fontSize: '14px', color: '#7cfc00', fontStyle: 'bold' })
       .setOrigin(0.5)
       .setDepth(2);
     btn.on('pointerup', () => this.leave());
@@ -117,17 +117,17 @@ export class PostMatchScene extends Phaser.Scene {
     const reposts = Math.round(likes * Phaser.Math.FloatBetween(0.1, 0.3));
 
     this.add.rectangle(WIDTH / 2, y, 760, 96, 0x16161f, 1).setStrokeStyle(1, 0x33334a).setDepth(1);
-    this.add
-      .text(WIDTH / 2 - 360, y - 32, `${post.author}  `, { fontFamily: 'monospace', fontSize: '14px', color: '#ffffff', fontStyle: 'bold' })
+    const author = this.add
+      .text(WIDTH / 2 - 360, y - 32, post.author, { fontFamily: CONFIG.UI.FONT, fontSize: '14px', color: '#ffffff', fontStyle: 'bold' })
       .setOrigin(0, 0.5)
       .setDepth(2);
     this.add
-      .text(WIDTH / 2 - 360 + `${post.author}  `.length * 8.5, y - 32, post.handle, { fontFamily: 'monospace', fontSize: '13px', color: '#666688' })
+      .text(WIDTH / 2 - 360 + author.width + 8, y - 32, post.handle, { fontFamily: CONFIG.UI.FONT, fontSize: '13px', color: '#666688' })
       .setOrigin(0, 0.5)
       .setDepth(2);
     this.add
       .text(WIDTH / 2 - 360, y - 8, filled, {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '13px',
         color: '#d8d8e8',
         wordWrap: { width: 700 },
@@ -136,7 +136,7 @@ export class PostMatchScene extends Phaser.Scene {
       .setDepth(2);
     this.add
       .text(WIDTH / 2 - 360, y + 30, `♥ ${likes.toLocaleString()}    ⇄ ${reposts.toLocaleString()}`, {
-        fontFamily: 'monospace',
+        fontFamily: CONFIG.UI.FONT,
         fontSize: '12px',
         color: '#666688',
       })

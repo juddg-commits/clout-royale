@@ -6,6 +6,10 @@ You play a gym influencer defending your mansion from waves of parody creator ar
 
 > Solo project. All characters and brands are parody; no real people or platforms.
 
+| Home base | Mission |
+|---|---|
+| ![Hub](docs/hub.png) | ![Fight](docs/fight.png) |
+
 ## Play
 
 ```bash
@@ -69,4 +73,4 @@ Pushing to `main` runs `.github/workflows/deploy.yml`, which builds the game and
 
 ## Status
 
-Playable prototype: one arena, one class, three missions. Placeholder art (generated shapes), no audio.
+Playable prototype: one arena, one class, three missions. All art is generated procedurally at boot (no image assets yet); no audio.
