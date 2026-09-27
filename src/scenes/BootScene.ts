@@ -1,9 +1,10 @@
 /**
- * BootScene — single entry point. Generates the placeholder textures once,
- * applies offline automation accrual (M5), then hands off to the hub with
- * the "while you were gone" haul so it can show the return banner.
+ * BootScene — single entry point. Loads the art manifest, generates stand-ins
+ * for anything that didn't load, applies offline automation accrual (M5),
+ * then hands off to the hub with the "while you were gone" haul.
  */
 import Phaser from 'phaser';
+import { ART_MANIFEST } from '../data/art';
 import { AutomationSystem } from '../systems/AutomationSystem';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import { makeMansionTextures } from './mansion';
@@ -11,6 +12,16 @@ import { makeMansionTextures } from './mansion';
 export class BootScene extends Phaser.Scene {
   constructor() {
     super('BootScene');
+  }
+
+  preload(): void {
+    // Relative path so the build works from any subpath (GitHub Pages).
+    this.load.setPath('assets/');
+    for (const [key, file] of Object.entries(ART_MANIFEST)) this.load.image(key, file);
+    // Not fatal: makeMansionTextures() fills character/floor keys with generated stand-ins.
+    this.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (file: Phaser.Loader.File) => {
+      console.warn(`[art] failed to load ${file.src}; using a generated stand-in`);
+    });
   }
 
   create(): void {

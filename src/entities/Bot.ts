@@ -7,6 +7,7 @@
 import Phaser from 'phaser';
 import { CONFIG, type BotArchetypeConfig } from '../data/config';
 import type { Player } from './Player';
+import { fitCharacter, makeGroundRing } from './characterArt';
 
 export type BotRole = 'attack' | 'standoff';
 
@@ -21,7 +22,8 @@ export class Bot extends Phaser.Physics.Arcade.Image {
   private orbitDir: 1 | -1;
   private nameLabel: Phaser.GameObjects.Text;
   private hpBar: Phaser.GameObjects.Graphics;
-  private shadow: Phaser.GameObjects.Ellipse;
+  private ring: Phaser.GameObjects.Arc;
+  private baseScale = 1;
   private speech?: Phaser.GameObjects.Text;
   private speechUntil = 0;
   private onAttack: (bot: Bot) => void;
@@ -44,7 +46,10 @@ export class Bot extends Phaser.Physics.Arcade.Image {
     this.setCollideWorldBounds(true);
     this.setDepth(10);
 
-    this.shadow = scene.add.ellipse(x, y + 12, 26, 9, 0x000000, 0.35).setDepth(9);
+    const art = CONFIG.ART.BOT;
+    fitCharacter(this, art.SIZE_PX, art.BODY_RADIUS_PX);
+    this.baseScale = this.scaleX;
+    this.ring = makeGroundRing(scene, x, y, art.BODY_RADIUS_PX, def.color);
     this.nameLabel = scene.add
       .text(x, y, def.label, { fontFamily: CONFIG.UI.FONT, fontSize: '11px', fontStyle: 'bold', color: '#e8e8f0', stroke: '#000000', strokeThickness: 3 })
       .setOrigin(0.5)
@@ -78,7 +83,8 @@ export class Bot extends Phaser.Physics.Arcade.Image {
         if (time >= this.nextAttackAt) {
           this.nextAttackAt = time + this.def.attackCooldownMs;
           // Little lunge so the swing reads visually.
-          this.scene.tweens.add({ targets: this, scaleX: 1.3, scaleY: 1.3, yoyo: true, duration: 90 });
+          const lunge = this.baseScale * 1.25;
+          this.scene.tweens.add({ targets: this, scaleX: lunge, scaleY: lunge, yoyo: true, duration: 90 });
           this.onAttack(this);
         }
       }
@@ -150,7 +156,7 @@ export class Bot extends Phaser.Physics.Arcade.Image {
 
   private syncAttachments(): void {
     const bar = CONFIG.UI.BOT_HP_BAR;
-    this.shadow.setPosition(this.x, this.y + 12);
+    this.ring.setPosition(this.x, this.y);
     this.nameLabel.setPosition(this.x, this.y + bar.OFFSET_Y - 10);
     this.hpBar.clear();
     const pct = Phaser.Math.Clamp(this.health / this.def.maxHealth, 0, 1);
@@ -169,7 +175,7 @@ export class Bot extends Phaser.Physics.Arcade.Image {
   }
 
   destroy(fromScene?: boolean): void {
-    this.shadow.destroy();
+    this.ring.destroy();
     this.nameLabel.destroy();
     this.hpBar.destroy();
     this.speech?.destroy();

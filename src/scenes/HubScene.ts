@@ -29,7 +29,7 @@ interface HubSceneData {
 
 interface PlacedInteractable {
   def: HubInteractableConfig;
-  marker: Phaser.GameObjects.Rectangle;
+  marker: Phaser.GameObjects.Arc;
 }
 
 export class HubScene extends Phaser.Scene {
@@ -76,10 +76,10 @@ export class HubScene extends Phaser.Scene {
       const glow = this.add.image(def.x, def.y, 'glow').setTint(def.color).setScale(1.6).setDepth(4);
       this.tweens.add({ targets: glow, alpha: 0.45, scale: 1.3, duration: 1400, repeat: -1, yoyo: true, ease: 'Sine.InOut' });
       const marker = this.add
-        .rectangle(def.x, def.y, 30, 30, def.color, 0.95)
-        .setStrokeStyle(2, 0xffffff, 0.7)
+        .circle(def.x, def.y, 15, def.color, 0.95)
+        .setStrokeStyle(3, 0xffffff, 0.85)
         .setDepth(5);
-      this.tweens.add({ targets: marker, angle: 45, duration: 2400, repeat: -1, yoyo: true, ease: 'Sine.InOut' });
+      this.tweens.add({ targets: marker, scale: 1.15, duration: 900, repeat: -1, yoyo: true, ease: 'Sine.InOut' });
       this.add
         .text(def.x, def.y - 34, def.label, { fontFamily: CONFIG.UI.FONT, fontSize: '11px', fontStyle: 'bold', color: '#e8e8f0', stroke: '#000000', strokeThickness: 3 })
         .setOrigin(0.5)
@@ -292,17 +292,22 @@ export class HubScene extends Phaser.Scene {
   private buildHud(): void {
     const depth = CONFIG.UI.HUD_DEPTH;
     this.hudText = this.add
-      .text(16, 16, this.hudLine(), {
+      .text(18, 16, this.hudLine(), {
         fontFamily: CONFIG.UI.FONT,
         fontSize: '15px',
+        fontStyle: 'bold',
         color: '#ffffff',
+        backgroundColor: '#000000aa',
+        padding: { x: 10, y: 6 },
       })
       .setDepth(depth);
     this.add
-      .text(16, CONFIG.CANVAS.HEIGHT - 28, 'WASD move · walk up to a marker and press E', {
+      .text(18, CONFIG.CANVAS.HEIGHT - 30, 'WASD move · walk up to a marker and press E', {
         fontFamily: CONFIG.UI.FONT,
         fontSize: '12px',
-        color: '#666688',
+        color: '#d8d8e8',
+        stroke: '#000000',
+        strokeThickness: 3,
       })
       .setDepth(depth);
   }

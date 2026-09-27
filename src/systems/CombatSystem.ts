@@ -10,6 +10,7 @@ import { CONFIG } from '../data/config';
 import type { Player } from '../entities/Player';
 import { Bot } from '../entities/Bot';
 import type { EffectsSystem } from './EffectsSystem';
+import { addGlow } from './fx';
 
 export interface CombatCallbacks {
   /** Fired after a bot's HP reaches 0 (bot is already destroyed). */
@@ -48,6 +49,7 @@ export class CombatSystem {
     const proj = this.projectiles.create(x, y, 'projectile') as Phaser.Physics.Arcade.Image;
     proj.setRotation(angleRad);
     proj.setDepth(5);
+    addGlow(proj, 0xffe066, 2);
     this.scene.physics.velocityFromRotation(
       angleRad,
       stats.projectileSpeed,

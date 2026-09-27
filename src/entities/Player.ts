@@ -10,6 +10,8 @@ import type { CreatorClassDef } from '../data/classes';
 import { computeUpgradeMods, type UpgradeMods } from '../data/upgrades';
 import type { SaveData } from '../systems/ProgressionSystem';
 import type { CombatSystem } from './../systems/CombatSystem';
+import { addGlow, removeGlow } from '../systems/fx';
+import { fitCharacter, makeGroundRing } from './characterArt';
 
 export interface PlayerStats {
   health: number;
@@ -43,7 +45,8 @@ export class Player extends Phaser.Physics.Arcade.Image {
 
   private keys: WASDKeys;
   private nextAttackAt = 0;
-  private shadow: Phaser.GameObjects.Ellipse;
+  private ring: Phaser.GameObjects.Arc;
+  private rageGlow?: Phaser.FX.Glow;
 
   constructor(scene: Phaser.Scene, x: number, y: number, classDef: CreatorClassDef, save: SaveData) {
     super(scene, x, y, 'player');
@@ -54,7 +57,9 @@ export class Player extends Phaser.Physics.Arcade.Image {
     this.setCollideWorldBounds(true);
     this.setPushable(false); // bots bump into the player but can't shove them across the arena
     this.setDepth(10);
-    this.shadow = scene.add.ellipse(x, y + 14, 30, 10, 0x000000, 0.35).setDepth(9);
+    const art = CONFIG.ART.PLAYER;
+    fitCharacter(this, art.SIZE_PX, art.BODY_RADIUS_PX);
+    this.ring = makeGroundRing(scene, x, y, art.BODY_RADIUS_PX, classDef.color);
 
     this.upgradeMods = computeUpgradeMods(save.upgrades);
     const maxHealth = classDef.baseStats.maxHealth + this.upgradeMods.maxHealthBonus;
@@ -71,7 +76,7 @@ export class Player extends Phaser.Physics.Arcade.Image {
   }
 
   update(time: number, combat: CombatSystem): void {
-    this.shadow.setPosition(this.x, this.y + 14);
+    this.ring.setPosition(this.x, this.y);
     if (this.dead) return;
 
     // --- Dash overrides normal movement while active ---
@@ -101,12 +106,15 @@ export class Player extends Phaser.Physics.Arcade.Image {
 
     // --- Rage visual + end-of-rage cringe spike ---
     if (this.isRaging(time)) {
+      if (!this.wasRaging) this.rageGlow = addGlow(this, CONFIG.ART.RAGE_GLOW_COLOR, 5);
       this.wasRaging = true;
       // Pulsing red tint while the hype flows.
       this.setTint(Math.sin(time / 90) > 0 ? 0xff5555 : 0xffaa88);
     } else if (this.wasRaging) {
       this.wasRaging = false;
       this.clearTint();
+      removeGlow(this, this.rageGlow);
+      this.rageGlow = undefined;
       this.addCringe(CONFIG.ABILITIES.FAKE_PLATES_RAGE.CRINGE_SPIKE_ON_END);
       this.rageJustEnded = true; // GameScene fires "FAKE PLATES EXPOSED"
     }
@@ -194,7 +202,7 @@ export class Player extends Phaser.Physics.Arcade.Image {
   // ---------------------------------------------------------------------
 
   destroy(fromScene?: boolean): void {
-    this.shadow.destroy();
+    this.ring.destroy();
     super.destroy(fromScene);
   }
 

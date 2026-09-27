@@ -20,6 +20,20 @@ export interface ZoneConfig {
   width: number;
   height: number;
   color: number;
+  /** Texture key tiled across the zone (see data/art.ts). Missing = flat color fill. */
+  floor?: string;
+}
+
+/** A decorative prop drawn under everything that moves. No collision. */
+export interface DecorConfig {
+  key: string; // texture key from data/art.ts
+  x: number; // center, px
+  y: number;
+  /** Set both to tile the texture across a rectangle (e.g. pool water). */
+  width?: number;
+  height?: number;
+  angle?: number; // degrees
+  scale?: number; // multiplied with ART.TILE_SCALE
 }
 
 export interface SpawnPoint {
@@ -134,7 +148,7 @@ export const CONFIG = {
       },
       { id: 'gainsShop', label: 'GAINS SHOP', x: 235, y: 180, color: 0xffa94d, action: 'openShop' }, // Aura Gym: grind for gains
       { id: 'grindShrine', label: 'GRIND SHRINE', x: 235, y: 545, color: 0xe74c3c, action: 'showStats' }, // moved to the Pool
-      { id: 'contentStudio', label: 'CONTENT STUDIO', x: 560, y: 382, color: 0x8d99ae, action: 'openAutomation' }, // AI automation (idle layer)
+      { id: 'contentStudio', label: 'AUTOMATION DESK', x: 560, y: 382, color: 0x8d99ae, action: 'openAutomation' }, // AI automation (idle layer)
     ],
   },
 
@@ -146,13 +160,42 @@ export const CONFIG = {
     NAME: 'AURA MANSION',
     WALL_PADDING: 10, // inset of playable physics bounds from the canvas edge
     ZONES: [
-      { id: 'auraGym', label: 'AURA GYM', x: 70, y: 70, width: 330, height: 210, color: 0xe74c3c },
-      { id: 'smoothieShop', label: 'AIRWON SMOOTHIE SHOP', x: 500, y: 60, width: 280, height: 150, color: 0x27ae60 },
-      { id: 'ringLightRoom', label: 'RING LIGHT ROOM', x: 880, y: 70, width: 330, height: 210, color: 0xff8fd6 },
-      { id: 'pool', label: 'POOL', x: 70, y: 430, width: 330, height: 220, color: 0x2e86de },
-      { id: 'touchGrassBackyard', label: 'TOUCH GRASS BACKYARD', x: 760, y: 440, width: 450, height: 210, color: 0x7bb661 },
-      { id: 'contentStudio', label: 'CONTENT STUDIO', x: 440, y: 290, width: 240, height: 130, color: 0x8d99ae }, // added in M5 for the automation layer
+      { id: 'auraGym', label: 'AURA GYM', x: 70, y: 70, width: 330, height: 210, color: 0xe74c3c, floor: 'floor-gym' },
+      { id: 'smoothieShop', label: 'AIRWON SMOOTHIE SHOP', x: 500, y: 60, width: 280, height: 150, color: 0x27ae60, floor: 'floor-kitchen' },
+      { id: 'ringLightRoom', label: 'RING LIGHT ROOM', x: 880, y: 70, width: 330, height: 210, color: 0xff8fd6, floor: 'floor-lightwood' },
+      { id: 'pool', label: 'POOL', x: 70, y: 430, width: 330, height: 220, color: 0x2e86de, floor: 'floor-deck' },
+      { id: 'touchGrassBackyard', label: 'TOUCH GRASS BACKYARD', x: 760, y: 440, width: 450, height: 210, color: 0x7bb661, floor: 'floor-grass' },
+      { id: 'contentStudio', label: 'CONTENT STUDIO', x: 440, y: 290, width: 240, height: 130, color: 0x8d99ae, floor: 'floor-studio' }, // added in M5 for the automation layer
     ] as ZoneConfig[],
+    // Props are cosmetic only. Positions keep clear of zone headers and hub markers.
+    DECOR: [
+      // Aura Gym: four weight benches around the Gains Shop
+      { key: 'decor-bench', x: 130, y: 150 },
+      { key: 'decor-bench', x: 340, y: 150 },
+      { key: 'decor-bench', x: 130, y: 240 },
+      { key: 'decor-bench', x: 340, y: 240 },
+      // Smoothie shop: counters flanking the fridge
+      { key: 'decor-sink', x: 548, y: 116 },
+      { key: 'decor-stove', x: 732, y: 116 },
+      // Ring light room: ring lights, rug, and a couch along the bottom wall
+      { key: 'decor-ringlight', x: 925, y: 128 },
+      { key: 'decor-ringlight', x: 1165, y: 128 },
+      { key: 'decor-rug', x: 1045, y: 180, scale: 1.3 },
+      { key: 'decor-couch-left', x: 997, y: 250 },
+      { key: 'decor-couch-mid', x: 1045, y: 250 },
+      { key: 'decor-couch-right', x: 1093, y: 250 },
+      // Pool: water inset inside the deck
+      { key: 'floor-water', x: 235, y: 551, width: 294, height: 162 },
+      // Backyard: greenery
+      { key: 'decor-bush', x: 800, y: 612, scale: 1.1 },
+      { key: 'decor-bush', x: 1172, y: 612, scale: 1.1 },
+      { key: 'decor-bush-orange', x: 1172, y: 505 },
+      { key: 'decor-bush-small', x: 990, y: 620 },
+      { key: 'decor-plant', x: 800, y: 505 },
+      // Content studio: a desk and a ring light
+      { key: 'decor-desk', x: 490, y: 372 },
+      { key: 'decor-ringlight', x: 640, y: 368 },
+    ] as DecorConfig[],
   },
 
   // -------------------------------------------------------------------------
@@ -417,6 +460,19 @@ export const CONFIG = {
       ENGAGEMENT_BOT_SWARM: { COSTS: [25, 45, 80], CLOUT_PER_MIN_PER_RANK: 0.1 }, // clout-priced, clout-producing
       AI_PODCAST_NETWORK: { COSTS: [1200, 2000], MONEY_PER_MIN_PER_RANK: 0.8, CLOUT_PER_MIN_PER_RANK: 0.1 }, // late-game trophy
     },
+  },
+
+  // -------------------------------------------------------------------------
+  // Art — sprite sizing and WebGL effects. Files are listed in data/art.ts.
+  // -------------------------------------------------------------------------
+  ART: {
+    TILE_SCALE: 0.75, // 64px tiles drawn at 48px so rooms read at character scale
+    PLAYER: { SIZE_PX: 38, BODY_RADIUS_PX: 14 }, // longest side on screen; circular hitbox
+    BOT: { SIZE_PX: 34, BODY_RADIUS_PX: 13 },
+    GROUND_RING_PAD_PX: 5, // team-color ring drawn this far outside the hitbox
+    GLOW: { STRENGTH: 3, PADDING: 12 }, // preFX glow on pickups/projectiles (WebGL only)
+    RAGE_GLOW_COLOR: 0xff4444,
+    FLOOR_TINT: 0x7d6e66, // darkens the hallway wood so rooms, characters, and the HUD stand out
   },
 
   // -------------------------------------------------------------------------

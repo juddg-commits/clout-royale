@@ -17,6 +17,7 @@ import { TrendSystem } from '../systems/TrendSystem';
 import { AbilitySystem } from '../systems/AbilitySystem';
 import { AutomationSystem } from '../systems/AutomationSystem';
 import { EffectsSystem } from '../systems/EffectsSystem';
+import { addGlow } from '../systems/fx';
 import { ProgressionSystem, type SaveData } from '../systems/ProgressionSystem';
 import { drawMansion, makeMansionTextures } from './mansion';
 
@@ -98,12 +99,14 @@ export class GameScene extends Phaser.Scene {
     makeMansionTextures(this);
     drawMansion(this, this.missionDef.name);
     this.add
-      .text(16, CONFIG.CANVAS.HEIGHT - 28, 'WASD move · Mouse aim · LMB attack · Q/E/Shift/R abilities', {
+      .text(18, CONFIG.CANVAS.HEIGHT - 30, 'WASD move · Mouse aim · LMB attack · Q/E/Shift/R abilities', {
         fontFamily: CONFIG.UI.FONT,
         fontSize: '12px',
-        color: '#666688',
+        color: '#d8d8e8',
+        stroke: '#000000',
+        strokeThickness: 3,
       })
-      .setDepth(2);
+      .setDepth(4);
 
     const pad = CONFIG.ARENA.WALL_PADDING;
     this.physics.world.setBounds(pad, pad, CONFIG.CANVAS.WIDTH - pad * 2, CONFIG.CANVAS.HEIGHT - pad * 2);
@@ -222,6 +225,7 @@ export class GameScene extends Phaser.Scene {
 
     const ghost = this.add
       .image(this.player.x, this.player.y, 'player')
+      .setScale(this.player.scaleX)
       .setRotation(this.player.rotation)
       .setAlpha(0.35)
       .setDepth(9);
@@ -320,6 +324,7 @@ export class GameScene extends Phaser.Scene {
     const smoothie = this.smoothieGroup.create(x, y, 'smoothie') as Phaser.Physics.Arcade.Image;
     smoothie.setDepth(4);
     this.attachGlow(smoothie, 0x40e0d0, 0.9);
+    addGlow(smoothie, 0x40e0d0);
     this.tweens.add({ targets: smoothie, y: y - 5, yoyo: true, repeat: -1, duration: 500, ease: 'Sine.InOut' });
     this.time.delayedCall(CONFIG.TREND.SMOOTHIE_LIFETIME_MS, () => {
       if (smoothie.active) smoothie.destroy(); // it melted
@@ -499,6 +504,8 @@ export class GameScene extends Phaser.Scene {
     const bot = new Bot(this, point.x, point.y, def, (b) => this.combat.botAttacksPlayer(b));
     bot.nextVoiceAt = time + Phaser.Math.Between(1500, CONFIG.BOTS.VOICE.MAX_INTERVAL_MS);
     this.botGroup.add(bot);
+    // Group defaults reset collideWorldBounds on add, so re-apply it (knockback could push bots off-arena).
+    bot.setCollideWorldBounds(true);
   }
 
   private pickSpawnPoint(): SpawnPoint {
@@ -529,6 +536,7 @@ export class GameScene extends Phaser.Scene {
     const pickup = this.pickupGroup.create(x, y, 'pickup') as Phaser.Physics.Arcade.Image;
     pickup.setDepth(4);
     this.attachGlow(pickup, 0xffd700, 0.8);
+    addGlow(pickup, 0xffd700);
     pickup.setData('money', def.moneyDrop);
     pickup.setData('clout', def.cloutDrop);
     this.tweens.add({ targets: pickup, scale: 1.3, yoyo: true, repeat: -1, duration: 400 });

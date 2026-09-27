@@ -1,9 +1,9 @@
 /**
  * Shared Aura Mansion rendering — used by both HubScene (non-combat) and
  * GameScene (arena) so the two spaces are visibly the same place.
- * Every texture is generated procedurally here (no asset files): BootScene
- * calls makeMansionTextures() once, and the exists-guards make repeat calls
- * free. Swapping in real art = loading sprites under the same texture keys.
+ * Art comes from data/art.ts (loaded in BootScene). makeMansionTextures()
+ * generates procedural stand-ins, and its exists-guards skip every key that
+ * already loaded, so the stand-ins only appear if a file is missing.
  */
 import Phaser from 'phaser';
 import { CONFIG } from '../data/config';
@@ -108,40 +108,78 @@ export function makeMansionTextures(scene: Phaser.Scene): void {
   }
 }
 
-/** Floor, walls, the labeled zones, and a vignette. */
+/** Floor, room floors, props, room trims + labels, outer wall, and a vignette. */
 export function drawMansion(scene: Phaser.Scene, subtitle: string): void {
   const { WIDTH, HEIGHT } = CONFIG.CANVAS;
-  scene.add.tileSprite(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 'floor').setDepth(0);
+  const tileScale = CONFIG.ART.TILE_SCALE;
+  scene.add
+    .tileSprite(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 'floor')
+    .setTileScale(tileScale)
+    .setTint(CONFIG.ART.FLOOR_TINT)
+    .setDepth(0);
 
-  const zones = scene.add.graphics().setDepth(1);
+  // Room floors: tiled texture when loaded, flat tint otherwise.
   for (const zone of CONFIG.ARENA.ZONES) {
-    zones.fillStyle(zone.color, 0.16);
-    zones.fillRoundedRect(zone.x, zone.y, zone.width, zone.height, 16);
-    zones.lineStyle(2, zone.color, 0.75);
-    zones.strokeRoundedRect(zone.x, zone.y, zone.width, zone.height, 16);
-    zones.fillStyle(zone.color, 0.14);
-    zones.fillRoundedRect(zone.x + 6, zone.y + 6, zone.width - 12, 22, 8); // header strip
-    scene.add
-      .text(zone.x + zone.width / 2, zone.y + 17, zone.label, {
+    const cx = zone.x + zone.width / 2;
+    const cy = zone.y + zone.height / 2;
+    if (zone.floor && scene.textures.exists(zone.floor)) {
+      scene.add.tileSprite(cx, cy, zone.width, zone.height, zone.floor).setTileScale(tileScale).setDepth(1);
+    } else {
+      scene.add.rectangle(cx, cy, zone.width, zone.height, zone.color, 0.16).setDepth(1);
+    }
+  }
+
+  // Props (cosmetic, no collision). Missing textures are skipped.
+  for (const d of CONFIG.ARENA.DECOR) {
+    if (!scene.textures.exists(d.key)) continue;
+    if (d.width !== undefined && d.height !== undefined) {
+      scene.add.tileSprite(d.x, d.y, d.width, d.height, d.key).setTileScale(tileScale).setDepth(1.5);
+    } else {
+      scene.add
+        .image(d.x, d.y, d.key)
+        .setScale(tileScale * (d.scale ?? 1))
+        .setAngle(d.angle ?? 0)
+        .setDepth(1.5);
+    }
+  }
+
+  // Room trims in the zone color (keeps each room's identity) + label pills.
+  const trims = scene.add.graphics().setDepth(2);
+  for (const zone of CONFIG.ARENA.ZONES) {
+    trims.lineStyle(6, 0x000000, 0.35);
+    trims.strokeRect(zone.x, zone.y, zone.width, zone.height);
+    trims.lineStyle(3, zone.color, 1);
+    trims.strokeRect(zone.x, zone.y, zone.width, zone.height);
+
+    const label = scene.add
+      .text(zone.x + zone.width / 2, zone.y + 16, zone.label, {
         fontFamily: CONFIG.UI.FONT,
-        fontSize: '12px',
+        fontSize: '11px',
         fontStyle: 'bold',
         color: '#ffffff',
       })
       .setOrigin(0.5)
-      .setAlpha(0.9)
-      .setDepth(2);
+      .setDepth(2.6);
+    trims.fillStyle(0x000000, 0.6);
+    trims.fillRoundedRect(label.x - label.width / 2 - 9, label.y - 10, label.width + 18, 20, 10);
+    trims.fillStyle(zone.color, 1);
+    trims.fillCircle(label.x - label.width / 2 - 2, label.y, 3); // color dot
   }
 
-  // Outer wall + vignette (above zones, below entities and HUD).
-  scene.add.graphics().setDepth(2).lineStyle(4, 0x3a3a55, 1).strokeRoundedRect(2, 2, WIDTH - 4, HEIGHT - 4, 12);
+  // Outer wall (the physics bounds) + vignette, above floors, below entities.
+  const wall = scene.add.graphics().setDepth(2.5);
+  wall.lineStyle(12, 0x26262f, 1).strokeRect(4, 4, WIDTH - 8, HEIGHT - 8);
+  wall.lineStyle(2, 0x5a5a6e, 1).strokeRect(10, 10, WIDTH - 20, HEIGHT - 20);
   scene.add.image(WIDTH / 2, HEIGHT / 2, 'vignette').setDepth(3);
 
   scene.add
-    .text(WIDTH / 2, HEIGHT - 22, `${CONFIG.ARENA.NAME} — ${subtitle}`, {
+    .text(WIDTH / 2, HEIGHT - 24, `${CONFIG.ARENA.NAME} — ${subtitle}`, {
       fontFamily: CONFIG.UI.FONT,
       fontSize: '13px',
-      color: '#8888aa',
+      fontStyle: 'bold',
+      color: '#e8e8f0',
+      stroke: '#000000',
+      strokeThickness: 3,
     })
     .setOrigin(0.5)
     .setDepth(4);

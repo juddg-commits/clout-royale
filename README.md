@@ -41,6 +41,7 @@ Missions unlock in order. The objective is a data field on the mission (`elimina
 - **Idle automation.** Content-farm units earn over real time. Accrual is timestamp-driven rather than timer-driven: it is folded forward at boot, purchase, collect, match end, and page hide, with an 8-hour offline cap at half rate.
 - **Post-match feed.** A fake social feed reacts to the run. Posts are picked from a registry by declarative conditions (outcome, victory type, objective, eliminations, level-ups, trend peak).
 - **Persistence.** Save data lives in `localStorage` with a version field and a defaults merge on load.
+- **Art pipeline.** Gameplay code refers to textures only by key. An art manifest maps each key to a file, and any file that fails to load is replaced by a generated stand-in, so a missing sprite degrades to a shape instead of crashing. Characters get circular hitboxes sized from their actual frame. Glow effects use Phaser's WebGL pre-FX and switch off on the Canvas renderer.
 
 ## Architecture
 
@@ -48,15 +49,16 @@ Missions unlock in order. The objective is a data field on the mission (`elimina
 src/
   main.ts              Phaser game config, scene list, pagehide save hook
   data/
-    config.ts          Every tunable number (no magic numbers elsewhere)
+    config.ts          Every tunable number (no magic numbers elsewhere), room floors, prop layout
+    art.ts             Art manifest: texture key -> image file
     classes.ts         Playable class registry
     abilities.ts       Ability registry (each id maps to an executor in AbilitySystem)
     upgrades.ts        Upgrade registry + computeUpgradeMods()
     automation.ts      Idle unit registry + computeAutomationRates()
     missions.ts        Mission registry, objectives, unlock gates, outcome labels
     posts.ts           Popups, bot voice lines, feed post registry + picker
-  entities/            Player, Bot (AI), HubAvatar
-  systems/             Combat, Ability, Effects, Progression, Automation, Trend
+  entities/            Player, Bot (AI), HubAvatar, shared character sizing + ground rings
+  systems/             Combat, Ability, Effects, Progression, Automation, Trend, WebGL glow helpers
   scenes/              Boot → Hub ⇄ Game → PostMatch, plus Upgrade and Automation overlays
 ```
 
@@ -73,4 +75,9 @@ Pushing to `main` runs `.github/workflows/deploy.yml`, which builds the game and
 
 ## Status
 
-Playable prototype: one arena, one class, three missions. All art is generated procedurally at boot (no image assets yet); no audio.
+Playable prototype: one arena, one class, three missions. No audio yet.
+
+## Credits
+
+- Sprites and tiles: [Top-down Shooter](https://kenney.nl/assets/top-down-shooter) by Kenney, CC0 public domain. Characters use the pack's unarmed poses.
+- Font: [Space Grotesk](https://fonts.google.com/specimen/Space+Grotesk), SIL Open Font License.
