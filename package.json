@@ -1,0 +1,22 @@
+{
+  "name": "clout-royale",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Clout Royale — a satirical top-down 2D creator-combat arena game (TypeScript + Phaser 3)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.85.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
