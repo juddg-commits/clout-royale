@@ -1,5 +1,5 @@
 /**
- * Clout Royale — entry point. Fixed 1280x720 canvas, arcade physics.
+ * Clout Royale — entry point. 1280x720 game, scaled down to fit smaller screens; arcade physics.
  */
 import Phaser from 'phaser';
 import { CONFIG } from './data/config';
@@ -22,6 +22,12 @@ const game = new Phaser.Game({
   parent: 'app',
   width: CONFIG.CANVAS.WIDTH,
   height: CONFIG.CANVAS.HEIGHT,
+  // Phones and small windows see the whole arena, shrunk; big screens keep the native size.
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    max: { width: CONFIG.CANVAS.WIDTH, height: CONFIG.CANVAS.HEIGHT },
+  },
   fps: forceLoop ? { forceSetTimeOut: true, target: 60 } : undefined,
   backgroundColor: '#0b0b12',
   physics: {

@@ -25,15 +25,41 @@
         align-items: center;
         justify-content: center;
       }
+      #app {
+        width: 100vw;
+        height: 100vh;
+      }
       #app canvas {
         border-radius: 14px;
         box-shadow:
           0 24px 80px rgba(0, 0, 0, 0.7),
           0 0 0 1px rgba(255, 255, 255, 0.06);
       }
+      /* The game is keyboard-only (WASD, E), so touch screens get told up front. */
+      #keyboard-note {
+        display: none;
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        margin: 0;
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: #ffc93c;
+        color: #1a1a2e;
+        font: 600 15px/1.4 'Space Grotesk', system-ui, sans-serif;
+        text-align: center;
+        z-index: 10;
+      }
+      @media (hover: none) and (pointer: coarse) {
+        #keyboard-note {
+          display: block;
+        }
+      }
     </style>
   </head>
   <body>
+    <p id="keyboard-note">Clout Royale needs a keyboard: WASD to move, E to interact. Open it on a computer to play.</p>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
